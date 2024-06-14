@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+require('dotenv').config();
 const cheerio = require('cheerio');
 const { default: axios } = require('axios');
 const cron = require('node-cron');
@@ -47,15 +48,15 @@ const fetchAllZakup = async () => {
   let newZakup = []; // Новый массив для хранения уникальных закупок
   for (let i = 1; i <= 50; i++) {
     const url = `https://www.goszakup.gov.kz/ru/search/announce?count_record=50&page=${i}`;
-    await fetchZakup(url, newZakup);
+    await fetchZakup(url);
   }
   zakup = newZakup; // Обновление основного массива только уникальными закупками
 };
 
-// Schedule the fetchAllMovies function to run every 6 hours
+// Schedule the fetchAllZakup function to run every 6 hours
 cron.schedule('0 */6 * * *', () => {
   console.log('Fetching new data...');
-  fetchAllMovies();
+  fetchAllZakup();
 });
 
 // Initial fetch when the server starts
