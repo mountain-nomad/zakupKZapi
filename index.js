@@ -4,25 +4,9 @@ require('dotenv').config();
 const cheerio = require('cheerio');
 const { default: axios } = require('axios');
 const cron = require('node-cron');
-const fs = require('fs');
 const port = process.env.PORT || 5000;
 
 let zakup = [];
-
-// Load data from file
-const loadZakupFromFile = () => {
-  try {
-    const data = fs.readFileSync('zakup.json', 'utf8');
-    zakup = JSON.parse(data);
-  } catch (err) {
-    console.log('No previous data found, starting fresh.');
-  }
-};
-
-// Save data to file
-const saveZakupToFile = () => {
-  fs.writeFileSync('zakup.json', JSON.stringify(zakup, null, 2), 'utf8');
-};
 
 const fetchZakup = async (link) => {
   try {
@@ -40,6 +24,7 @@ const fetchZakup = async (link) => {
       const sum = $(`#search-result > tbody > tr:nth-child(${i}) > td:nth-child(6)`).text().trim();
       const status = $(`#search-result > tbody > tr:nth-child(${i}) > td:nth-child(7)`).text().trim();
 
+      // Проверка на наличие закупки в массиве
       if (!zakup.some(item => item.id === id)) {
         zakup.push({
           id,
@@ -60,12 +45,12 @@ const fetchZakup = async (link) => {
 };
 
 const fetchAllZakup = async () => {
-  zakup = []; // Очистка текущих данных перед новым сбором
+  let newZakup = []; // Новый массив для хранения уникальных закупок
   for (let i = 1; i <= 10000; i++) {
     const url = `https://www.goszakup.gov.kz/ru/search/announce?count_record=50&page=${i}`;
     await fetchZakup(url);
   }
-  saveZakupToFile(); // Сохранение данных в файл
+  zakup = newZakup; // Обновление основного массива только уникальными закупками
 };
 
 // Schedule the fetchAllZakup function to run every 6 hours
@@ -75,7 +60,6 @@ cron.schedule('0 */6 * * *', () => {
 });
 
 // Initial fetch when the server starts
-loadZakupFromFile(); // Загрузка данных из файла при старте сервера
 fetchAllZakup();
 
 app.get("/zakup", (req, res) => {
