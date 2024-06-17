@@ -10,7 +10,9 @@ let zakup = [];
 
 const fetchZakup = async (link) => {
   try {
-    let { data } = await axios.get(link);
+    let { data } = await axios.get(link).catch((err) => {
+      console.log(err)
+    });
     let $ = cheerio.load(data);
 
     for (let i = 1; i <= 50; i++) {
